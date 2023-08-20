@@ -21,14 +21,28 @@ export async function mealsRoute(app: FastifyInstance) {
       return res.status(401).send('User not logged')
     }
 
-    const meal = await knex('meals').insert({
+    await knex('meals').insert({
       allowed_eat: allowedEat,
       description,
       meal_time: mealTime,
       name,
       user_uuid: sessionId,
+      created_at: new Date(),
     })
 
-    return res.status(200).send(meal)
+    return res.status(200).send()
+  })
+  app.get('/', async (req, res) => {
+    const { sessionId } = req.cookies
+
+    if (!sessionId) {
+      return res.status(401).send('User not logged')
+    }
+
+    const meals = await knex('meals').where('user_uuid', sessionId).select()
+
+    return res.status(200).send({
+      meals: meals.map((e) => ({ ...e, created_at: new Date(e.created_at) })),
+    })
   })
 }
