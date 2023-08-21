@@ -9,11 +9,11 @@ export async function mealsRoute(app: FastifyInstance) {
       description: string().optional(),
       mealTime: string(),
       allowedEat: boolean(),
+      mealDate: string(),
     })
 
-    const { name, description, mealTime, allowedEat } = mealBodySchema.parse(
-      req.body,
-    )
+    const { name, description, mealTime, allowedEat, mealDate } =
+      mealBodySchema.parse(req.body)
 
     const { sessionId } = req.cookies
 
@@ -27,7 +27,7 @@ export async function mealsRoute(app: FastifyInstance) {
       meal_time: mealTime,
       name,
       user_uuid: sessionId,
-      created_at: new Date(),
+      meal_date: new Date(mealDate),
     })
 
     return res.status(200).send()
@@ -42,7 +42,7 @@ export async function mealsRoute(app: FastifyInstance) {
     const meals = await knex('meals').where('user_uuid', sessionId).select()
 
     return res.status(200).send({
-      meals: meals.map((e) => ({ ...e, created_at: new Date(e.created_at) })),
+      meals: meals.map((e) => ({ ...e, meal_date: new Date(e.meal_date) })),
     })
   })
 }
