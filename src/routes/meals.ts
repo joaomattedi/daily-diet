@@ -45,4 +45,23 @@ export async function mealsRoute(app: FastifyInstance) {
       meals: meals.map((e) => ({ ...e, meal_date: new Date(e.meal_date) })),
     })
   })
+  app.get('/:id', async (req, res) => {
+    const { sessionId } = req.cookies
+
+    if (!sessionId) {
+      return res.status(401).send('User not logged')
+    }
+
+    const getMealParamsSchema = z.object({
+      id: z.string(),
+    })
+
+    const { id } = getMealParamsSchema.parse(req.params)
+
+    const meal = await knex('meals').where('id', id).first()
+
+    return res.status(200).send({
+      meal,
+    })
+  })
 }
