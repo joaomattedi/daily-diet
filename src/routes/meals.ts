@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { boolean, string, z } from 'zod'
 import { knex } from '../database'
+import { calculateBiggerSequence } from '../utils/ArrayUtils'
 
 export async function mealsRoute(app: FastifyInstance) {
   app.post('/', async (req, res) => {
@@ -80,5 +81,25 @@ export async function mealsRoute(app: FastifyInstance) {
     await knex('meals').where('id', id).del()
 
     return res.status(200).send()
+  })
+  app.get('/summary', async (req, res) => {
+    const { sessionId } = req.cookies
+
+    if (!sessionId) {
+      return res.status(401).send('User not logged')
+    }
+
+    const meals = await knex('meals').where('user_uuid', sessionId).select()
+
+    const summary = {
+      totalMeals: meals.length,
+      totalOnDiet: meals.filter((meal) => meal.allowed_eat).length,
+      totalOffDiet: meals.filter((meal) => !meal.allowed_eat).length,
+      maxSequenceOnDietMeals: calculateBiggerSequence(meals),
+    }
+
+    return res.status(200).send({
+      summary,
+    })
   })
 }
