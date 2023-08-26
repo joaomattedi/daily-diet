@@ -59,7 +59,12 @@ export async function mealsRoute(app: FastifyInstance) {
 
     const { id } = getMealParamsSchema.parse(req.params)
 
-    const meal = await knex('meals').where('id', id).first()
+    const meal = await knex('meals')
+      .where({
+        id,
+        user_uuid: sessionId,
+      })
+      .first()
 
     return res.status(200).send({
       meal,
